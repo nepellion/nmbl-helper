@@ -17,6 +17,15 @@ Operation = Upgrade
 Target = systemd-ukify
 Target = linux
 Target = booster
+Target = nmbl-helper
+Target = efibootmgr
+
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = sbctl
 
 [Action]
 Description = Rebuilding UKI and ensuring UEFI entry...

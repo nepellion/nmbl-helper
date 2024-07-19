@@ -50,7 +50,7 @@ find_kernel_for_pkg() {
   done
 
   prettyprint r "Could not find kernel for package $expected_pkgbase" >&2    
-  exit 1
+  return 1
 }
 
 create_kernel_entry() {
@@ -62,31 +62,57 @@ create_kernel_entry() {
   local current_section="$1"
   prettyprint y "Creating entry for section $current_section..."
 
-  local kernel=$(find_kernel_for_pkg "$current_section")
-  prettyprint b "Found kernel: $kernel"
-  
-  local pkgbase_dir="$nmbl_dir/$current_section"
-  mkdir -p "$pkgbase_dir"
+  local nmbl_kernel_dir="$nmbl_dir/$current_section"
+  mkdir -p "$nmbl_kernel_dir"
 
-  local booster_img="$pkgbase_dir/booster.img"
-  booster build --force --kernel-version ${kernel##/usr/lib/modules/} "$booster_img" || exit 1
-  prettyprint b "Built booster image: $booster_img"
+  local kernel_ver=
+  local linux_img=
+  if [[ -e "$nmbl_kernel_dir/vmlinuz" ]] && [[ -e "$nmbl_kernel_dir/kernel-version" ]]; then
+    linux_img="$nmbl_kernel_dir/vmlinuz";
+    kernel_ver=$(<"$nmbl_kernel_dir/kernel-version")
 
-  local linux_img="$pkgbase_dir/linux"
-  install -Dm644 "${kernel}/vmlinuz" "$linux_img" || exit 1
-  prettyprint b "Installed kernel image: $linux_img"
+    prettyprint b "Found custom kernel: $kernel ($nmbl_kernel_dir/vmlinuz $kernel_ver)"
+  else
+    local kernel=$(find_kernel_for_pkg "$current_section")
+    if [[ -n "$kernel" ]]; then
+      linux_img="${kernel}/vmlinuz";
+      kernel_ver="${kernel##/usr/lib/modules/}"
+      prettyprint b "Found kernel: $kernel (package: $current_section)"
+    else
+      prettyprint r "Kernel not found for package $current_section" >&2
+      exit 1
+    fi
+  fi
+
+  local initramfs_img="$nmbl_kernel_dir/initramfs.img"
+  if command -v booster > /dev/null; then
+    if [[ -z "$kernel_ver" ]]; then
+      prettyprint r "Kernel version not found for package $current_section" >&2
+      exit 1
+    fi
+
+    booster build --force --kernel-version "$kernel_ver" "$initramfs_img" || exit 1
+    prettyprint b "Built booster image: $initramfs_img"
+  elif [[ -e "$initramfs_img" ]]; then
+    prettyprint y "Using existing initramfs image, because booster isn't available: $initramfs_img"
+  else
+    prettyprint r "Booster not available, and no initramfs image found: $initramfs_img" >&2
+    exit 1
+  fi
 
   local efi_file="$esp/EFI/Linux/${current_section}.efi"
   ukify build \
     --config="$ukify_conf" \
     --linux="$linux_img" \
-    --initrd="$booster_img" \
+    --initrd="$initramfs_img" \
     --output="$efi_file" \
   || exit 1
   prettyprint b "Built UKI EFI file: $efi_file"
-    
-  sbctl sign "$efi_file" || exit 1
-  prettyprint b "Signed EFI file."
+
+  if command -v sbctl > /dev/null; then
+    sbctl sign "$efi_file" || exit 1
+    prettyprint b "Signed EFI file."
+  fi
 
   local boot_label=${BootLabel:-"Arch linux"}
 
@@ -96,8 +122,6 @@ create_kernel_entry() {
   efi_file=${efi_file//\//\\}
 
   /bin/bash $base_dir/efi-install.sh -l "$boot_label" -F "$efi_file" || exit 1
-
-  prettyprint g "Entry for section $current_section created."
 }
 
 create_kernel_entries() {
@@ -116,8 +140,11 @@ create_kernel_entries() {
         fi  
 
         local new_section="${line:1:-1}"
-        if pacman -Q "$new_section" > /dev/null 2>&1; then
+        if pacman -Qi "$new_section" 2>/dev/null > /dev/null; then
           current_section="$new_section"
+        elif [[ -e "$nmbl_dir/$new_section/vmlinuz" ]]; then
+          current_section="$new_section"
+          prettyprint y "Found custom kernel for section $new_section"
         else
           prettyprint y "Skipped section $new_section, no kernel package found"
         fi
