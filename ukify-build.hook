@@ -1,0 +1,25 @@
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = boot/*-ucode.img
+Target = lib/modules/*
+Target = etc/booster.yaml
+Target = etc/ukify.conf
+Target = etc/nmbl-ukify.conf
+Target = etc/nmbl-ukify.conf.d/*
+
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = systemd-ukify
+Target = linux
+Target = booster
+
+[Action]
+Description = Rebuilding UKI and ensuring UEFI entry...
+When = PostTransaction
+Exec = /usr/lib/nmbl-helper/rebuild-uki.sh
+NeedsTargets
