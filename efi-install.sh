@@ -3,10 +3,11 @@
 show_help()
 {
    echo "usage: ./efi-install.sh [options]"
-   echo "  -F <file>    EFI file path local to the Boot loader partition"
-   echo "  -d <device>  Disk containing boot loader (defaults to df result of '/boot')"
-   echo "  -l <label>   Boot entry label"
+   echo "  -F <file>    EFI file path local to the Boot loader partition in EFI format (e.g. '\EFI\Linux\linux.efi')"
+   echo "  -d <device>  Disk containing boot loader (e.g. '/dev/sda1', defaults to df result of '/boot')"
+   echo "  -l <label>   Boot entry label (e.g. 'Arch linux')"
    echo "  -f           Force new entry when it is already present (defaults to false)"
+   echo "  -u <uuid>    UUID of the boot parititon (defaults to lsblk result of '/boot' when available)"
    echo "  -D           Dry run"
    echo "  -v           Print additional information."
    echo "  -h           Show help/usage."
@@ -32,14 +33,16 @@ prettyprint() {
 efi_file=
 boot_dev=
 entry_name=
+boot_part_uuid=
 force=0
 verbose=0
 dry_run=0
-while getopts "F:d:l:fDvh" option; do
+while getopts "F:d:l:u:fDvh" option; do
     case $option in
         F) efi_file="$OPTARG";;
         d) boot_dev="$OPTARG";;
         l) entry_name="$OPTARG";;
+        u) boot_part_uuid="$OPTARG";;
         f) force=1;;
         v) verbose=1;;
         D) dry_run=1;;
@@ -69,10 +72,12 @@ if [[ -z "$boot_dev" ]]; then
   exit
 fi
 
-boot_part_uuid=$(lsblk "$boot_dev" -o PARTUUID | tail -1)
 if [[ -z "$boot_part_uuid" ]]; then
-  prettyprint r "Couldn't determine /boot partition UUID." >&2
-  exit
+  boot_part_uuid=$(lsblk "$boot_dev" -o PARTUUID | tail -1)
+  if [[ -z "$boot_part_uuid" ]]; then
+    prettyprint r "Couldn't determine /boot partition UUID. (You can provide it manually with the -u option)" >&2
+    exit
+  fi
 fi
 
 if [[ $verbose -eq 1 ]]; then

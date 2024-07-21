@@ -59,7 +59,14 @@ create_kernel_entry() {
     exit 1
   fi
 
+  if [[ -z "$2" ]]; then
+    prettyprint r "No instance identifier provided" >&2
+    exit 1
+  fi
+
   local current_section="$1"
+  local instance_identifier="$2"
+  local boot_part_uuid="$3"
   prettyprint y "Creating entry for section $current_section..."
 
   local nmbl_kernel_dir="$nmbl_dir/$current_section"
@@ -100,7 +107,7 @@ create_kernel_entry() {
     exit 1
   fi
 
-  local efi_file="$esp/EFI/Linux/${current_section}.efi"
+  local efi_file="$esp/EFI/$instance_identifier/${current_section}.efi"
   ukify build \
     --config="$ukify_conf" \
     --linux="$linux_img" \
@@ -121,7 +128,7 @@ create_kernel_entry() {
   # Replace / with \
   efi_file=${efi_file//\//\\}
 
-  /bin/bash $base_dir/efi-install.sh -l "$boot_label" -F "$efi_file" || exit 1
+  /bin/bash $base_dir/efi-install.sh -l "$boot_label" -F "$efi_file" -u "$boot_part_uuid" || exit 1
 }
 
 create_kernel_entries() {
@@ -135,7 +142,7 @@ create_kernel_entries() {
     case "$line" in 
       \[*\])
         if [[ -n "$current_section" ]]; then
-          create_kernel_entry "$current_section"
+          create_kernel_entry "$current_section" "$OSDirLabel" "$BootPartUUID"
           current_section=
         fi  
 
@@ -154,7 +161,7 @@ create_kernel_entries() {
   done < "$1"
 
   if [[ -n "$current_section" ]]; then
-    create_kernel_entry "$current_section"
+    create_kernel_entry "$current_section" "$OSDirLabel" "$BootPartUUID"
   fi
 }
 

@@ -38,6 +38,8 @@ The default EFI boot record is set using `efibootmgr` from the `efibootmgr` pack
 Configuration is done through files in `/etc/nmbl-ukify.conf.d` directory.  
 The default configuration file `/etc/nmbl-ukify.conf` already contains these defaults:
 ```conf
+OSDirLabel="Linux"
+
 [linux]
 BootLabel="Arch linux"
 
@@ -45,6 +47,11 @@ BootLabel="Arch linux"
 BootLabel="Arch linux LTS"
 ```
 
+#### Global config
+You can configure the boot partition directory containing kernel images with the `OSDirLabel` variable.
+You can also add a `BootPartUUID` variable to specify boot partition's UUID without relying on the default lsblk lookup (important for example when chrooted and lsblk doesn't provide UUIDs)
+
+#### Section config
 A section per boot record is expected, with it's name matching the used linux kernel package (for example `linux` or `linux-lts`) with supported config values:
 - `BootLabel`: Boot label used for the default EFI boot record (defaults to: `Arch linux`)
 

@@ -1,10 +1,10 @@
 pkgname=nmbl-helper
-pkgver=0.5
+pkgver=0.6
 pkgrel=0
 pkgdesc="Helper scripts and automatic hook for direct UEFI UKI boot setup without a standalone bootloader"
 arch=('any')
 license=('GPL-3.0-only')
-depends=('systemd-ukify' 'efibootmgr')
+depends=('systemd-ukify' 'efibootmgr' 'grep')
 optdepends=(
   'booster: Automatic initramfs image creation (recommended)'
   'sbctl: Secure Boot signing'
@@ -22,9 +22,9 @@ source=(
 )
 sha512sums=(
   'b1d77c83dfc239603a0d5ca2b0b183c302563c5cfe44dde7dfd8c9318a3e3c55e141d47cbc59c9192768141c0521f5bc728fa36ca571ba5ae2a41e088aa6d627'
-  '89e95c733759cff680236718e5afe64f0237db874ffd1e8c9271e6cfbb5e200c21323de448fd959026b31d41ca4625c65a220f508950f291836491dd2821f02e'
-  '821ca5d89387acfcf30f677130316039ebc37179fcab574ffa24c3c558f874b9a155a41b793812ef61aa8fe5b2cfbccf9aab819c39e07c22ba4a87f25c3b94ee'
-  '8749834ce614c984c8a84634cb524f80dfc98549ecbf358fc48925eb0be4d7ed5e2573d1b2070c12d5afb9a4577064568b75bb4c14d19e085eb3ed89b5564146'
+  '7826358c2291236e92d62512508dd245d45c4214cc80a8b94bc0dcbf41845e799fc18a0d992d2b7eed36d2c33742a49d7e31509d84647510c07210c8bff5f20c'
+  '691e30d9cfaf320081be513f3dbed3d68f1776223907e826a14fc8418f40f59f1e3022c5fce5b9db0c035ac8633acebe8a18fec368a42627cfa83320ce679b4d'
+  'a1de8db15403b659da11cd9f3b18163f931e07a65f356286f96fbcff9285b4c2e71c54562a0aa7d6456592830c2858c2f46c7c8d383fcdb8113e01f647c2a0e4'
   'b66116db1da77599bd6e699ed35dc0954dab86bcd8ae7698aec1c613ead17413157ed464c4863fbffebfe5d3c389ed1acde6332384c43ea4db9dcb97a7f7ff72'
 )
 
