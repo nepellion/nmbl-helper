@@ -1,6 +1,6 @@
 pkgname=nmbl-helper
-pkgver=0.6
-pkgrel=0
+pkgver=0.7
+pkgrel=1
 pkgdesc="Helper scripts and automatic hook for direct UEFI UKI boot setup without a standalone bootloader"
 arch=('any')
 license=('GPL-3.0-only')
@@ -40,4 +40,10 @@ package() {
   # Scripts
   install -D -m755 rebuild-uki.sh "$pkgdir/usr/lib/nmbl-helper/rebuild-uki.sh"
   install -D -m755 efi-install.sh "$pkgdir/usr/lib/nmbl-helper/efi-install.sh"
+
+  # Disable default booster hooks
+  install -d -m755 "$pkgdir/etc/pacman.d/hooks"
+  ln -s /dev/null "$pkgdir/etc/pacman.d/hooks/60-booster-remove.hook"
+  ln -s /dev/null "$pkgdir/etc/pacman.d/hooks/90-booster-install.hook"
+  ln -s /dev/null "$pkgdir/etc/pacman.d/hooks/zz-sbctl.hook"
 }
