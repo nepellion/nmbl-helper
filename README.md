@@ -23,20 +23,21 @@ The UKI building is based on the `ukify` command from the `systemd-ukify` packag
 see https://www.freedesktop.org/software/systemd/man/latest/ukify.html and/or https://wiki.archlinux.org/title/Unified_kernel_image#ukify  
 
 > [!WARNING]  
-> At the very least `Cmdline` needs to be set to proper kernel parameters to boot! you can for example copy these from `/boot/grug/grub.cfg` if you were using grub before (they are the parameters passed to the `linux` executable in the main menu entry, they are mostly necessary to find and mount the main root partition, after which fstab will take over)
+> options Linux and Initrd are ignored, as they get set by discovered kernel packages and booster initramfs images respectively
+
+> [!WARNING]  
+> At the very least `Cmdline` needs to be set to proper kernel parameters to boot! (see: https://wiki.archlinux.org/title/Kernel_parameters).  
+> You can for example copy these from `/boot/grug/grub.cfg` if you were using grub before (they are the parameters passed to the `linux` executable in the main menu entry, they are mostly there to find and mount the main root partition, after which fstab will be loaded and used to mount the rest)
 
 > [!IMPORTANT]  
-> You should also consider adding `Microcode` as either `/boot/amd-ucode.img` or `/boot/intel-ucode.img` from their respective packages (see: https://wiki.archlinux.org/title/microcode)
-
-> [!NOTE]  
-> options Linux and Initrd are overridden by discovered kernel packages and booster initramfs images respectively
+> You should also consider adding your respective `Microcode` package, either `amd-ucode` or `intel-ucode` (see: https://wiki.archlinux.org/title/microcode)
 
 ### UEFI | efibootmgr
 
-The default EFI boot record is set using `efibootmgr` from the `efibootmgr` package.
+The default EFI boot record is set using `efibootmgr` command from the `efibootmgr` package.
 
 Configuration is done through files in `/etc/nmbl-ukify.conf.d` directory.  
-The default configuration file `/etc/nmbl-ukify.conf` already contains these defaults:
+The default file `/etc/nmbl-ukify.conf` should already contain this configuration:
 ```conf
 OSDirLabel="Linux"
 
@@ -47,16 +48,22 @@ BootLabel="Arch linux"
 BootLabel="Arch linux LTS"
 ```
 
-#### Global config
-You can configure the boot partition directory containing kernel images with the `OSDirLabel` variable.
-You can also add a `BootPartUUID` variable to specify boot partition's UUID without relying on the default lsblk lookup (important for example when chrooted and lsblk doesn't provide UUIDs)
+### Configuration
+Variables are read in a simplistic top-down manner. Variables outside a section (start of file) are used as "global" for the rest of the file unless overriden on a per-section basis.
 
-#### Section config
+Options:
+| Variable      | Default | Description |
+|---------------|---------|-------------|
+| BootLabel     | `Arch linux` | Boot label visible in the UEFI menu |
+| OSDirLabel    | `Linux` | Directory to use in `/boot/EFI` |
+| BootPartUUID  | | UUID of the partition containing the `EFI` folder (if not specified lsblk will be used to determine it)|
+| KernelModules | | These will be added to the `/etc/ukify.conf` file, in case you need different modules to be pre-loaded for different kernels |
+
+#### Sections
 A section per boot record is expected, with it's name matching the used linux kernel package (for example `linux` or `linux-lts`) with supported config values:
-- `BootLabel`: Boot label used for the default EFI boot record (defaults to: `Arch linux`)
 
 > [!TIP]  
-> when adding other kernel packages, consider adding partial files to `/etc/nmbl-ukify.conf.d` instead of editing `/etc/nmbl-ukify.conf` to minimize conflicts while updating
+> when adding other sections / kernel packages, consider adding partial files to `/etc/nmbl-ukify.conf.d` instead of editing `/etc/nmbl-ukify.conf` to minimize conflicts while updating
 
 ## Secure boot
 
